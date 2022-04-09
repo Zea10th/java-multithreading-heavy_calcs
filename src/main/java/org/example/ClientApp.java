@@ -13,15 +13,22 @@ public class ClientApp {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(new BufferedInputStream(System.in));
-
-        //Connecting to server and send request
         Client client = new Client();
+
         try {
             client.startConnection(SERVER_IP, SERVER_PORT);
 
-            System.out.println("Enter positive integer and press Enter.");
-            System.out.println(client.sendMessage(scanner.nextLine()));
-            client.stopConnection();
+            System.out.println("Enter positive integer and press Enter or type \"quit\" for disconnect.");
+            while (true) {
+                String request = scanner.nextLine();
+
+                if (request.equalsIgnoreCase("quit")) {
+                    client.stopConnection();
+                    break;
+                }
+
+                System.out.println(client.sendMessage(request));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

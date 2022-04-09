@@ -1,49 +1,58 @@
 package org.example.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server implements Runnable {
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
     public static final int PORT = 60666;
+    public static final int DELAY = 2000;
 
-    public void startServer() throws IOException {
-        serverSocket = new ServerSocket(PORT);
-        clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    public void startServer() throws InterruptedException {
 
+        System.out.println("Server started.");
 
-        String request = in.readLine();
-        Integer number;
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Client connected.");
 
-        try {
-            number = Integer.parseInt(request);
-            out.printf("Server returned: %d", getFNumber(number));
-        } catch (NumberFormatException e) {
-            out.println(e.getMessage());
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            while (!clientSocket.isClosed()) {
+                System.out.println("Getting request.");
+
+                String entry = in.readLine();
+
+                if (entry.equalsIgnoreCase("quit")) {
+                    System.out.println("Client initialize server termination ...");
+                    out.flush();
+                    Thread.sleep(DELAY);
+                    break;
+                }
+
+                out.println("Server returned: " + getFNumber(Integer.parseInt(entry)));
+            }
+
+            System.out.println("Client disconnected.");
+
+            in.close();
+            out.close();
+            clientSocket.close();
+
+            System.out.println("Job is done!");
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
-    }
 
-    public void stop() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
+        System.out.println("Server stopped.");
     }
 
     @Override
     public void run() {
         try {
             startServer();
-        } catch (IOException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
